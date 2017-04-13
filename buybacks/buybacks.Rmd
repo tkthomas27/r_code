@@ -20,6 +20,7 @@ library(reshape2) #for reshaping data
 library(zoo) #for date functions
 library(scales) #for breaks in plots
 library(knitr) #for kable
+library(ggthemes) #for better themes
 
 s5 <- read.csv("/Volumes/jet/dropbox/asr/datasets/sp500.csv") # read in data
 
@@ -71,24 +72,35 @@ kable(describe(s5_annt[2:7], fast = T),digits = 2)
 
 ```{r data}
 
-pl_repo <- ggplot(s5_10y_ann, aes(x=Year)) +
-            labs(list(title = "Repurchases and Net Repurchases (2005-2014)", y = "Billions", x = "")) + 
-            geom_hline(yintercept = 0) +
+pl_repo <- ggplot(s5_annt, aes(x=Year)) +
+            labs(list(title = "Repurchases and Net Repurchases (2006-2015)", y = "Billions", x = "")) + 
+            geom_hline(yintercept = 0, color="grey") +
             geom_line(aes(y=Repurchases , col='Repurchases')) +
             geom_line(aes(y=Net.Repurchases, col='Net Repuchases')) +
-            theme(legend.title=element_blank()) +
+            theme_minimal() + theme(legend.title=element_blank()) +
             scale_x_continuous(breaks = seq(2006,2015,1))
 
 ggplotly(pl_repo, tooltip = c("y","x"))
 
-pl_div <- ggplot(s5_10y_ann, aes(x=Year)) +
-            labs(list(title = "Dividends and Net Income (2005-2014)", y = "Billions", x = "")) + 
+pl_div <- ggplot(s5_annt, aes(x=Year)) +
+            labs(list(title = "Dividends and Net Income (2006-2015)", y = "Billions", x = "")) + 
             geom_line(aes(y=Dividends , col='Dividends')) +
             geom_line(aes(y=Net.Income, col='Net Income')) +
-            theme(legend.title=element_blank()) +
-            scale_x_continuous(breaks = seq(2006,2015,1))
+            theme_minimal() + theme(legend.title=element_blank()) +
+            scale_x_continuous(breaks = seq(2006,2015,1)) +
+            expand_limits( y = 0)
 
 ggplotly(pl_div, tooltip = c("y","x"))
+
+pl_pay <- ggplot(s5_annt, aes(x=Year)) +
+            labs(list(title = "Payouts and Net Payouts (2006-2015)", y = "Billions", x = "")) + 
+            geom_line(aes(y=Payouts , col='Payouts')) +
+            geom_line(aes(y=Net.Payouts, col='Net Payouts')) +
+            theme_minimal() + theme(legend.title=element_blank()) +
+            scale_x_continuous(breaks = seq(2006,2015,1)) +
+            expand_limits( y = 0)
+
+ggplotly(pl_pay, tooltip = c("y","x"))
 
 ```
 
