@@ -1,0 +1,235 @@
+---
+title: "Buyback Charts"
+output:
+  html_notebook: null
+  html_document: default
+  pdf_document: default
+  toc: yes
+pdf_document: default
+number_sections: yes
+---
+
+hello world
+
+```{r init,tidy=TRUE}
+library(plotly)
+library(ggplot2)
+library(tidyr)
+library(psych)
+library(reshape2)
+library(zoo)
+library(scales)
+
+# read in data
+s5 <- read.csv("/Volumes/jet/dropbox/asr/datasets/sp500.csv")
+
+# keep relevant variables
+s5<-s5[,c('year','tic','repo','exf_exist_end','ni','totdiv_adj')]
+
+# scale repurchases from compustat
+s5 <- within(s5,{
+    repo = repo/1000
+    ni = ni/1000
+    exf_exist_end = exf_exist_end/1000000
+    totdiv_adj = totdiv_adj/1000000
+    count = 1
+    payout = repo + totdiv_adj
+    netpayout = totdiv_adj - exf_exist_end
+})
+
+# rename columns
+colnames(s5) <- c("Year", "Ticker", "Repurchases", "Net.Repurchases", "Net.Income", "Dividends", "Net.Payouts", "Payouts", "Count")
+
+# create 2015 data
+s5_2015 <- subset(s5,Year==2015 & Year<2016)
+
+# create 3 year data
+s5_3y <- subset(s5,Year>2012 & Year<2016)
+
+# create 10 year data
+s5_10y <- subset(s5,Year>2005 & Year<2016)
+
+```
+
+# By Year
+
+```{r summ_data}
+s5_10y_ann <- aggregate(s5_10y[,c('Repurchases','Net.Repurchases','Net.Income','Dividends','Payouts','Net.Payouts')], list(Year=s5_10y$Year), sum)
+
+kable(describe(s5_10y_ann[2:6], fast = T),digits = 3)
+
+```
+
+
+```{r data}
+
+pl_repo <- ggplot(s5_10y_ann, aes(x=Year)) +
+            labs(list(title = "Repurchases and Net Repurchases (2005-2014)", y = "Billions", x = "")) + 
+            geom_hline(yintercept = 0) +
+            geom_line(aes(y=Repurchases , col='Repurchases')) +
+            geom_line(aes(y=Net.Repurchases, col='Net Repuchases')) +
+            theme(legend.title=element_blank()) +
+            scale_x_continuous(breaks = seq(2006,2015,1))
+
+ggplotly(pl_repo, tooltip = c("y","x"))
+
+pl_div <- ggplot(s5_10y_ann, aes(x=Year)) +
+            labs(list(title = "Dividends and Net Income (2005-2014)", y = "Billions", x = "")) + 
+            geom_line(aes(y=Dividends , col='Dividends')) +
+            geom_line(aes(y=Net.Income, col='Net Income')) +
+            theme(legend.title=element_blank()) +
+            scale_x_continuous(breaks = seq(2006,2015,1))
+
+ggplotly(pl_div, tooltip = c("y","x"))
+
+```
+
+# By Firm
+
+```{r aggregate}
+
+# sum 10 year data
+s5_10y <- aggregate(s5_10y[,c('repo','netrepo','ni','count','div','payout','netpayout')], list(Firm=s5_10y$permno), sum)
+# drop if not full 10 years of data
+s5_10y <- subset(s5_10y,count==10)
+colnames(s5_10y) <- c("Firm", "Repurchases", "Net.Repurchases", "Net.Income", "Count", "Dividends", "Payouts", "Net.Payouts")
+
+# sum 3 year data
+s5_3y <- aggregate(s5_3y[,c('repo','netrepo','ni','count','div','payout','netpayout')], list(Firm=s5_3y$permno), sum)
+# drop if not full 10 years of data
+s5_3y <- subset(s5_3y,count==3)
+colnames(s5_3y) <- c("Firm", "Repurchases", "Net.Repurchases", "Net.Income", "Count", "Dividends", "Payouts", "Net.Payouts")
+
+```
+
+```{r payouts_rank}
+
+pldf <- subset(s5_10y,Net.Income>0)
+
+# create payout/ni
+pldf$Payouts.NI = pldf$Payouts/pldf$Net.Income
+
+# create net payout
+pldf$Net.Payouts.NI = pldf$Net.Payouts/pldf$Net.Income
+
+
+
+# stopped here
+
+
+
+# remove outliers
+pldf <- subset(pldf,pldf$pay_ni<2)
+pldf <- subset(pldf,pldf$netpay_ni<2)
+
+# rank payout/ni and sort by rank
+pldf$Rank = rank(pldf$pay_ni)
+pldf <- pldf[order(pldf$Rank),] 
+
+#reshape and label
+pldf <- pldf %>% gather(key,value, pay_ni, netpay_ni)
+pldf[pldf=="pay_ni"]<-"Payouts/NI"
+pldf[pldf=="netpay_ni"]<-"Net Payouts/NI"
+
+#plot
+#pl_payouts_rank <- pldf %>%
+   # ggplot(aes(x=Rank, y=value, colour=key)) +
+   # geom_hline(yintercept = 1) + geom_vline(xintercept = 145) + geom_line() +
+    #labs(list(title = "Payouts/NI Ranked (2005-2014)", x = "Rank", y = "")) +
+    #theme(legend.title=element_blank())
+
+pl_repo <- ggplot(s5_10y_ann, aes(x=Year)) +
+            labs(list(title = "Repurchases and Net Repurchases (2005-2014)", y = "Billions", x = "")) + 
+            geom_hline(yintercept = 0) +
+            geom_line(aes(y=Repurchases , col='Repurchases')) +
+            geom_line(aes(y=Net.Repurchases, col='Net Repuchases')) +
+            theme(legend.title=element_blank()) +
+            scale_x_continuous(breaks = seq(2006,2015,1))
+
+ggplotly(pl_payouts_rank)
+
+```
+
+
+```{r net_payouts_rank}
+
+pldf <- subset(s5_10y,ni>0)
+
+# create payout/ni
+pldf$pay_ni = pldf$payout/pldf$ni
+
+# create net payout
+pldf$netpay_ni = pldf$netpayout/pldf$ni
+
+# remove outliers
+pldf <- subset(pldf,pldf$pay_ni<2)
+pldf <- subset(pldf,pldf$netpay_ni<2)
+
+# rank payout/ni and sort by rank
+pldf$Rank = rank(pldf$netpay_ni)
+pldf <- pldf[order(pldf$Rank),] 
+
+#reshape and label
+pldf <- pldf %>% gather(key,value, pay_ni, netpay_ni)
+pldf[pldf=="pay_ni"]<-"Payouts/NI"
+pldf[pldf=="netpay_ni"]<-"Net Payouts/NI"
+
+#plot
+pl_net_payouts_rank <- pldf %>%
+    ggplot(aes(x=Rank, y=value, colour=key)) +
+    geom_hline(yintercept = 1) + geom_vline(xintercept = 224) + geom_line() + 
+    labs(list(title = "Net Payouts/NI Ranked (2005-2014)", x = "Rank", y = "")) +
+    theme(legend.title=element_blank())
+
+ggplotly(pl_net_payouts_rank)
+
+```
+
+
+```{r gross_net_rank, fig.align = 'center'}
+
+pldf <- subset(s5_10y,ni>0)
+
+# create payout/ni
+pldf$pay_ni = pldf$payout/pldf$ni
+
+# create net payout
+pldf$netpay_ni = pldf$netpayout/pldf$ni
+
+# remove outliers
+pldf <- subset(pldf,pldf$pay_ni<2)
+pldf <- subset(pldf,pldf$netpay_ni<2)
+
+# create two dfs with separate rankings
+pldfn <- pldf
+pldfn$Rank = rank(pldfn$netpay_ni)
+pldfn <- pldfn[order(pldfn$Rank),]
+pldfn <- pldfn[,c("Rank","netpay_ni")]
+
+pldfg <- pldf
+pldfg$Rank = rank(pldfg$pay_ni)
+pldfg <- pldfg[order(pldfg$Rank),]
+pldfg <- pldfg[,c("Rank","pay_ni")]
+
+#merge two datasets
+pldf <- merge(pldfg,pldfn,by="Rank")
+
+#reshape and label
+pldf <- pldf %>% gather(key,value, pay_ni, netpay_ni)
+pldf[pldf=="pay_ni"]<-"Payouts/NI"
+pldf[pldf=="netpay_ni"]<-"Net Payouts/NI"
+
+#plot
+pl_gross_net_rank <- pldf %>%
+    ggplot(aes(x=Rank, y=value, colour=key)) + 
+    geom_hline(yintercept = 1) + geom_vline(xintercept = 224) + geom_vline(xintercept = 145) + geom_line() + 
+    labs(list(title = "Linked Ranks (2005-2014)", x = "Rank", y = "")) +
+    theme(legend.title=element_blank())
+    
+ggplotly(pl_gross_net_rank)
+
+```
+
+
+
+
