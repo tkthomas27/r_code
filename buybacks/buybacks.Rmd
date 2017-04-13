@@ -12,21 +12,26 @@ number_sections: yes
 hello world
 
 ```{r init,tidy=TRUE}
-library(plotly)
-library(ggplot2)
-library(tidyr)
-library(psych)
-library(reshape2)
-library(zoo)
-library(scales)
+library(plotly) #for interactive graphs
+library(ggplot2) #for better graphs
+library(tidyr) #for cleaning datasets
+library(psych) #for describe function
+library(reshape2) #for reshaping data
+library(zoo) #for date functions
+library(scales) #for breaks in plots
+library(knitr) #for kable
 
-# read in data
-s5 <- read.csv("/Volumes/jet/dropbox/asr/datasets/sp500.csv")
+s5 <- read.csv("/Volumes/jet/dropbox/asr/datasets/sp500.csv") # read in data
 
 # keep relevant variables
-s5<-s5[,c('year','tic','repo','exf_exist_end','ni','totdiv_adj')]
+s5<-s5[,c('year','tic','repo','exf_exist_end','ni','totdiv_adj','gsector')]
 
-# scale repurchases from compustat
+# label gsector
+s5$gsector <- ordered(s5$gsector,
+    levels = c(seq(10,60,5)),
+    labels = c("Energy", "Materials", "Industrials", "Consumer Disc.", "Consumer Staples", "Health Care", "Financials", "Info. Tech.", "Telecomm.", "Utilities", "Real Estate"))
+
+# scale repurchases from compustat and create new variables
 s5 <- within(s5,{
     repo = repo/1000
     ni = ni/1000
@@ -38,25 +43,28 @@ s5 <- within(s5,{
 })
 
 # rename columns
-colnames(s5) <- c("Year", "Ticker", "Repurchases", "Net.Repurchases", "Net.Income", "Dividends", "Net.Payouts", "Payouts", "Count")
+colnames(s5) <- c("Year", "Firm", "Repurchases", "Net.Repurchases", "Net.Income", "Dividends","Sector","Net.Payouts", "Payouts", "Count")
 
-# create 2015 data
-s5_2015 <- subset(s5,Year==2015 & Year<2016)
-
-# create 3 year data
-s5_3y <- subset(s5,Year>2012 & Year<2016)
-
-# create 10 year data
-s5_10y <- subset(s5,Year>2005 & Year<2016)
+s5_2015 <- subset(s5,Year==2015 & Year<2016) # create 2015 data
+s5_3y <- subset(s5,Year>2012 & Year<2016) # create 3 year data
+s5_10y <- subset(s5,Year>2005 & Year<2016) # create 10 year data
 
 ```
 
 # By Year
 
-```{r summ_data}
-s5_10y_ann <- aggregate(s5_10y[,c('Repurchases','Net.Repurchases','Net.Income','Dividends','Payouts','Net.Payouts')], list(Year=s5_10y$Year), sum)
+```{r aggregate_year}
+s5_annt <- aggregate(.~Year, s5_10y, sum) #aggregate by year
+s5_anns <- aggregate(.~Year + Sector, s5_10y, sum) #aggregate by year and sector
 
-kable(describe(s5_10y_ann[2:6], fast = T),digits = 3)
+s5_annt<-subset(s5_annt, select=-c(Firm,Sector)) #remove summed firm/sector
+s5_anns<-subset(s5_anns, select=-c(Firm)) #remove summed firm/sector
+
+round(s5_annt,2) # look at annual data
+s5_anns[,3:9]<-round(s5_anns[,3:9],2) #round then...
+s5_anns #look at annual-sector data
+
+kable(describe(s5_annt[2:7], fast = T),digits = 2)
 
 ```
 
@@ -86,21 +94,40 @@ ggplotly(pl_div, tooltip = c("y","x"))
 
 # By Firm
 
-```{r aggregate}
+```{r aggregate_firm}
 
 # sum 10 year data
-s5_10y <- aggregate(s5_10y[,c('repo','netrepo','ni','count','div','payout','netpayout')], list(Firm=s5_10y$permno), sum)
+s5_10y <- aggregate(.~Firm + Sector, s5_10y, sum)
 # drop if not full 10 years of data
-s5_10y <- subset(s5_10y,count==10)
-colnames(s5_10y) <- c("Firm", "Repurchases", "Net.Repurchases", "Net.Income", "Count", "Dividends", "Payouts", "Net.Payouts")
+s5_10y <- subset(s5_10y,Count==10)
+
+# kable(describe(s5_10y_ann[2:6], fast = T),digits = 2)
 
 # sum 3 year data
-s5_3y <- aggregate(s5_3y[,c('repo','netrepo','ni','count','div','payout','netpayout')], list(Firm=s5_3y$permno), sum)
+s5_10y <- aggregate(.~Firm + Sector, s5_3y, sum)
 # drop if not full 10 years of data
-s5_3y <- subset(s5_3y,count==3)
-colnames(s5_3y) <- c("Firm", "Repurchases", "Net.Repurchases", "Net.Income", "Count", "Dividends", "Payouts", "Net.Payouts")
+s5_3y <- subset(s5_3y,Count==3)
 
 ```
+
+```{r top_repo}
+
+pldf <- subset(s5_10y,Net.Income>0)
+
+# rank payout/ni and sort by rank
+pldf$Rank = rank(-pldf$Repurchases, ties.method="first")
+pldf <- pldf[order(pldf$Rank),] 
+pldf$Firm <- as.character(pldf$Firm) # is this necessary
+pldf$Firm <- droplevels(as.factor(pldf$Firm))
+
+pl_repo <- ggplot(pldf, aes(x=Rank, y=Repurchases, fill = Sector,text = paste("Firm:", Firm))) + 
+        geom_bar(stat="identity") 
+
+ggplotly(pl_repo)
+
+
+```
+
 
 ```{r payouts_rank}
 
