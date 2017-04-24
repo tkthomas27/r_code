@@ -9,11 +9,10 @@ pdf_document: default
 number_sections: yes
 ---
 
-hello world
-
-```{r init,tidy=TRUE}
+```{r init,tidy=TRUE, messages=FALSE}
 library(plotly) #for interactive graphs
 library(ggplot2) #for better graphs
+library(dplyr)
 library(tidyr) #for cleaning datasets
 library(psych) #for describe function
 library(reshape2) #for reshaping data
@@ -21,6 +20,8 @@ library(zoo) #for date functions
 library(scales) #for breaks in plots
 library(knitr) #for kable
 library(ggthemes) #for better themes
+library(data.table)
+library(DT)
 
 s5 <- read.csv("/Volumes/jet/dropbox/asr/datasets/sp500.csv") # read in data
 
@@ -66,7 +67,7 @@ s5_anns<-subset(s5_anns, select=-c(Firm)) #remove summed firm/sector
 round(s5_annt,2) # look at annual data
 s5_anns[,3:9]<-round(s5_anns[,3:9],2) #round then...
 s5_anns #look at annual-sector data
-describeBy(s5_anns[,c("Repurchases","Equity.Iss")],s5_anns$Sector, fast=T, mat=T, digits=2)
+# describeBy(s5_anns[,c("Repurchases","Equity.Iss")],s5_anns$Sector, fast=T, mat=T, digits=2)
 ```
 
 The following two boxplots chart the data presented in the above table. Each sector-box shows the distribution of the 10 observations for each variable.
@@ -88,76 +89,38 @@ ggplotly(p_ei)
 ```
 
 
-```{r total_annual}
+```{r total_annual, warning=FALSE, error=FALSE, message=FALSE}
 
-# pl_fig1 <- ggplot(s5_annt, aes(x=Year)) +
-#             labs(list(title = "Repurchases and Dividends (2006-2015)", y = "Billions", x = "")) + 
-#             geom_line(aes(y=Repurchases, col='Repurchases')) +
-#             geom_line(aes(y=Dividends, col='Dividends')) +
-#             theme_minimal() + theme(legend.title=element_blank()) +
-#             scale_x_continuous(breaks = seq(2006,2015,1)) +
-#             expand_limits( y = c(0,1000))
-# 
-# ggplotly(pl_fig1, tooltip = c("y","x"))
-
-ay <- list(
-  tickfont = list(color = "black"),
-  overlaying = "y",
-  side = "right",
-  title = "second y axis"
-)
+s5_annt$MCap <- s5_annt$MCap/1000  
 
 plot_ly(s5_annt) %>%
-    add_lines(x = ~Year, y = ~Repurchases, name = "Repurchases") %>%
-    add_lines(x = ~Year, y = ~Dividends, name = "Dividends") %>%
-    add_trace(x = ~Year, y = ~MCap, name = "MCap", yaxis = "y2", fill="tozeroy") %>%
-  layout(
-    title = "Double Y Axis", yaxis2 = ay,
-    xaxis = list(title="x")
-  )
+  add_trace(x = ~Year, y = ~MCap, fill='tozeroy', name = 'Market Cap',
+            marker = list(color = '#7E827A')) %>%
+  add_trace(x = ~Year, y = ~Repurchases, type = 'scatter', mode = 'lines', name = 'Repurchases', yaxis = 'y2',
+            line = list(color = '#11BA7D', width=5)) %>%
+  add_trace(x = ~Year, y = ~Dividends, type = 'scatter', mode = 'lines', name = 'Dividends', yaxis = 'y2',
+            line = list(color = '#3498DB', width=5, dash='dash')) %>%
+  layout(title = 'S&P 500 Repurchases and Dividends (2006-2015)',
+         xaxis = list(title = "", dtick=1, showgrid=FALSE),
+         yaxis = list(side = 'right', title = 'Trillions', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'left', overlaying = "y", title = 'Billions', showgrid = FALSE, tick0=0))
 
-pl_fig2 <- ggplot(s5_annt, aes(x=Year)) +
-            labs(list(title = "Payouts as Percent of Net Income (2006-2015)", y = "Billions", x = "")) + 
-            geom_line(aes(y=Payouts/Net.Income , col='Payouts')) +        
-            geom_line(aes(y=Repurchases/Net.Income , col='Repurchases')) +
-            geom_line(aes(y=Dividends/Net.Income, col='Dividends')) +
-            theme_minimal() + theme(legend.title=element_blank()) +
-            scale_x_continuous(breaks = seq(2006,2015,1)) +
-            expand_limits( y = 0)
-
-ggplotly(pl_fig2, tooltip = c("y","x"))
-
-
-
-pl_fig6 <- ggplot(s5_annt, aes(x=Year)) +
-            labs(list(title = "Repurchases, Dividends, and Equity Issuances (2006-2015)", y = "Percent", x = "")) + 
-            geom_line(aes(y=Repurchases, col='Repurchases')) +
-            geom_line(aes(y=Dividends, col='Divdends')) +
-            geom_line(aes(y=-1*Equity.Iss, col='Equity Issuances')) +
-            theme_minimal() + theme(legend.title=element_blank()) +
-            scale_x_continuous(breaks = seq(2006,2015,1)) +
-            expand_limits( y = c(0,1000))
-
-ggplotly(pl_fig6, tooltip = c("y","x"))
-
-
-
-pl_fig7 <- ggplot(s5_annt, aes(x=Year)) +
-            labs(list(title = "Payouts and Net Payouts (2006-2015)", y = "Percent", x = "")) + 
-            geom_hline(yintercept = 0, color="grey") +
-            geom_line(aes(y=Payouts, col='Payouts')) +
-            geom_line(aes(y=Net.Payouts, col='Net Payouts')) +
-            theme_minimal() + theme(legend.title=element_blank()) +
-            scale_x_continuous(breaks = seq(2006,2015,1)) +
-            expand_limits( y = c(0,1000))
-
-ggplotly(pl_fig7, tooltip = c("y","x"))
+plot_ly(s5_annt) %>%
+  add_trace(x = ~Year, y = ~Net.Income, fill='tozeroy', name = 'Net.Income',
+            marker = list(color = '#7E827A')) %>%
+  add_trace(x = ~Year, y = ~Payouts, type = 'scatter', mode = 'lines', name = 'Payouts',
+            line = list(color = '#11BA7D', width=5)) %>%
+  add_trace(x = ~Year, y = ~Net.Payouts, type = 'scatter', mode = 'lines', name = 'Net Payouts', 
+            line = list(color = '#3498DB', width=5, dash='dash')) %>%
+  layout(title = 'S&P 500 Shareholder Payouts (2006-2015)',
+         xaxis = list(title = "", dtick=1, showgrid = FALSE),
+         yaxis = list(side = 'left', title = 'Billions', showgrid = FALSE, zeroline = FALSE))
 
 ```
 
 # By Firm
 
-```{r aggregate_firm}
+```{r aggregate_firm, warning=TRUE}
 
 # sum 10 year data
 s5_10y <- aggregate(.~Firm + Sector, s5_10y, sum)
@@ -172,6 +135,7 @@ s5_3y <- aggregate(.~Firm + Sector, s5_3y, sum)
 s5_3y <- subset(s5_3y,Count==3)
 
 ```
+
 
 ```{r firms_repo}
 
@@ -217,11 +181,29 @@ pl_repo1 <- ggplot(pldf, aes(x=Rank, y=Repurchases, fill = Sector, text = paste(
 
 ggplotly(pl_repo1)
 
+pldf <- subset(s5_2015,Net.Income>0)
+pldf$Firm <- as.character(pldf$Firm) # is this necessary
+pldf$Firm <- droplevels(as.factor(pldf$Firm))
+pldf$Rank = rank(-pldf$Repurchases, ties.method="first")
+pldf <- pldf[order(pldf$Rank),]
+pldf$Repurchases <- log(pldf$Repurchases)
+pldf$Rank <- log(pldf$Rank)
+pl_repo1 <- ggplot(pldf, aes(x=Rank, y=Repurchases, fill = Sector, text = paste("Firm:", Firm))) + 
+        geom_point() + 
+        labs(list(title = "Repurchase Rank (2015)", y = "Billions", x = "")) + 
+        #geom_hline(yintercept = mean(pldf$Repurchases), color="black", labels="xx") +
+        theme_minimal() + theme(legend.title=element_blank())
+
+ggplotly(pl_repo1)
+
 
 ```
 
 
 ```{r firms_reponet}
+
+disp_10y <- s5_10y %>% mutate_each(funs(round(.,2)), Repurchases, Net.Repurchases,Net.Income,Dividends,MCap,Equity.Iss,Net.Payouts,Payouts)
+DT::datatable(disp_10y)
 
 pldf <- s5_10y
 
@@ -233,19 +215,9 @@ pldf$Rank = rank(-pldf$Repurchases, ties.method="first")
 pldf <- pldf[order(pldf$Rank),] 
 
 plot_ly(pldf, x = ~Rank, y = ~Repurchases, type = 'bar', name = 'Repurchases',text = ~Firm) %>%
-  add_trace(y = ~Net.Repurchases, name = 'Net Repurchases') %>%
-  layout(yaxis = list(title = 'Billions'), barmode = 'overlay')
+    add_trace(y = ~Net.Repurchases, name = 'Net Repurchases') %>%
+    layout(title = "Repurchases and Net Repurchases (2006-2015)",yaxis = list(title = 'Billions', showgrid = FALSE), barmode = 'overlay')
 ```
-
-
-
-
-
-
-
-
-
-
 
 
 ```{r payouts_rank}
@@ -258,124 +230,20 @@ pldf$Payouts.NI = pldf$Payouts/pldf$Net.Income
 # create net payout
 pldf$Net.Payouts.NI = pldf$Net.Payouts/pldf$Net.Income
 
-
-
-# stopped here
-
-
-
-# remove outliers
-pldf <- subset(pldf,pldf$pay_ni<2)
-pldf <- subset(pldf,pldf$netpay_ni<2)
-
 # rank payout/ni and sort by rank
-pldf$Rank = rank(pldf$pay_ni)
-pldf <- pldf[order(pldf$Rank),] 
+pldf$Payouts.NI.Rank = rank(pldf$Payouts.NI)
+pldf$Net.Payouts.NI.Rank = rank(pldf$Net.Payouts.NI)
+pldf <- pldf[order(pldf$Payouts.NI.Rank),] 
 
-#reshape and label
-pldf <- pldf %>% gather(key,value, pay_ni, netpay_ni)
-pldf[pldf=="pay_ni"]<-"Payouts/NI"
-pldf[pldf=="netpay_ni"]<-"Net Payouts/NI"
-
-#plot
-#pl_payouts_rank <- pldf %>%
-   # ggplot(aes(x=Rank, y=value, colour=key)) +
-   # geom_hline(yintercept = 1) + geom_vline(xintercept = 145) + geom_line() +
-    #labs(list(title = "Payouts/NI Ranked (2005-2014)", x = "Rank", y = "")) +
-    #theme(legend.title=element_blank())
-
-pl_repo <- ggplot(s5_10y_ann, aes(x=Year)) +
-            labs(list(title = "Repurchases and Net Repurchases (2005-2014)", y = "Billions", x = "")) + 
-            geom_hline(yintercept = 0) +
-            geom_line(aes(y=Repurchases , col='Repurchases')) +
-            geom_line(aes(y=Net.Repurchases, col='Net Repuchases')) +
-            theme(legend.title=element_blank()) +
-            scale_x_continuous(breaks = seq(2006,2015,1))
-
-ggplotly(pl_payouts_rank)
+plot_ly(pldf) %>%
+  add_trace(x = ~Payouts.NI.Rank, y = ~round(Payouts.NI,2), type = 'scatter', mode = 'lines', name = 'Payouts', 
+            text = ~paste('Firm: ', Firm, '</br> Payouts: ', round(Payouts,2),'</br> Net Income: ', round(Net.Income,2)),
+            line = list(color = '#11BA7D', width=2)) %>%
+  add_trace(x = ~Payouts.NI.Rank, y = ~round(Net.Payouts.NI,2), type = 'scatter', mode = 'lines', name = 'Net Payouts',
+            text = ~paste('Net Payouts: ', round(Net.Payouts,2)),
+            line = list(color = '#3498DB', width=2)) %>%
+  layout(title = 'S&P 500 Shareholder Payouts (2006-2015)',
+         xaxis = list(title = "", dtick=50, showgrid = FALSE),
+         yaxis = list(side = 'left', title = 'Billions', showgrid = FALSE, zeroline = FALSE))
 
 ```
-
-
-```{r net_payouts_rank}
-
-pldf <- subset(s5_10y,ni>0)
-
-# create payout/ni
-pldf$pay_ni = pldf$payout/pldf$ni
-
-# create net payout
-pldf$netpay_ni = pldf$netpayout/pldf$ni
-
-# remove outliers
-pldf <- subset(pldf,pldf$pay_ni<2)
-pldf <- subset(pldf,pldf$netpay_ni<2)
-
-# rank payout/ni and sort by rank
-pldf$Rank = rank(pldf$netpay_ni)
-pldf <- pldf[order(pldf$Rank),] 
-
-#reshape and label
-pldf <- pldf %>% gather(key,value, pay_ni, netpay_ni)
-pldf[pldf=="pay_ni"]<-"Payouts/NI"
-pldf[pldf=="netpay_ni"]<-"Net Payouts/NI"
-
-#plot
-pl_net_payouts_rank <- pldf %>%
-    ggplot(aes(x=Rank, y=value, colour=key)) +
-    geom_hline(yintercept = 1) + geom_vline(xintercept = 224) + geom_line() + 
-    labs(list(title = "Net Payouts/NI Ranked (2005-2014)", x = "Rank", y = "")) +
-    theme(legend.title=element_blank())
-
-ggplotly(pl_net_payouts_rank)
-
-```
-
-
-```{r gross_net_rank, fig.align = 'center'}
-
-pldf <- subset(s5_10y,ni>0)
-
-# create payout/ni
-pldf$pay_ni = pldf$payout/pldf$ni
-
-# create net payout
-pldf$netpay_ni = pldf$netpayout/pldf$ni
-
-# remove outliers
-pldf <- subset(pldf,pldf$pay_ni<2)
-pldf <- subset(pldf,pldf$netpay_ni<2)
-
-# create two dfs with separate rankings
-pldfn <- pldf
-pldfn$Rank = rank(pldfn$netpay_ni)
-pldfn <- pldfn[order(pldfn$Rank),]
-pldfn <- pldfn[,c("Rank","netpay_ni")]
-
-pldfg <- pldf
-pldfg$Rank = rank(pldfg$pay_ni)
-pldfg <- pldfg[order(pldfg$Rank),]
-pldfg <- pldfg[,c("Rank","pay_ni")]
-
-#merge two datasets
-pldf <- merge(pldfg,pldfn,by="Rank")
-
-#reshape and label
-pldf <- pldf %>% gather(key,value, pay_ni, netpay_ni)
-pldf[pldf=="pay_ni"]<-"Payouts/NI"
-pldf[pldf=="netpay_ni"]<-"Net Payouts/NI"
-
-#plot
-pl_gross_net_rank <- pldf %>%
-    ggplot(aes(x=Rank, y=value, colour=key)) + 
-    geom_hline(yintercept = 1) + geom_vline(xintercept = 224) + geom_vline(xintercept = 145) + geom_line() + 
-    labs(list(title = "Linked Ranks (2005-2014)", x = "Rank", y = "")) +
-    theme(legend.title=element_blank())
-    
-ggplotly(pl_gross_net_rank)
-
-```
-
-
-
-
