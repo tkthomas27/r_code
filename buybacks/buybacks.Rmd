@@ -247,3 +247,18 @@ plot_ly(pldf) %>%
          yaxis = list(side = 'left', title = 'Billions', showgrid = FALSE, zeroline = FALSE))
 
 ```
+
+```{r treemap}
+library(treemap)
+
+
+```
+
+
+
+
+
+
+
+
+
