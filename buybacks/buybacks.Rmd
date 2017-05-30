@@ -248,11 +248,27 @@ plot_ly(pldf) %>%
 
 ```
 
-```{r treemap}
-library(treemap)
-
-
-```
+# ```{r treemap}
+# library(treemap)
+# treemap(pldf, #Your data frame object
+#         index=c("Sector","Firm"),  #A list of your categorical variables
+#         vSize = "Repurchases",  #This is your quantitative variable
+#         vColor = "Sector",
+#         type="index", #Type sets the organization and color scheme of your treemap
+#         #palette = "Reds",  #Select your color palette from the RColorBrewer presets or make your own.
+#         title="Repurchases", #Customize your title
+#         fontsize.title = 14 #Change the font size of the title
+#         )
+#
+# data(business) #wow!!!
+# itreemap(business)
+#
+#
+# treegraph(business[business$NACE1=="F - Construction",],
+#         index=c("NACE2", "NACE3", "NACE4"), show.labels=TRUE, truncate.labels=c(2,4,6),
+#         vertex.layout="fruchterman.reingold")
+#
+# ```
 
 
 

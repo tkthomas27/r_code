@@ -1,0 +1,36 @@
+---
+title: 'Data Analysis 1'
+output:
+  html_notebook:
+    toc: true
+    number_sections: true
+  pdf_document: default
+---
+
+
+
+
+# Split Apply Combine 
+
+http://stat545.com/block024_group-nest-split-map.html
+
+
+```{r}
+library(gapminder)
+library(tidyverse)
+
+# entry level
+gapminder %>%
+    group_by(continent) %>%
+    summarize_each(funs(min, max), lifeExp)
+
+# nesting
+gap_nested <- gapminder %>% 
+   group_by(continent, country) %>% 
+   nest()
+
+# apply function map and mutate
+
+```
+
+
