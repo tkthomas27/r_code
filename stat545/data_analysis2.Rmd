@@ -1,0 +1,13 @@
+---
+title: 'Data Analysis 2'
+output:
+  html_notebook:
+    toc: true
+    number_sections: true
+  pdf_document: default
+---
+
+
+# Factors
+http://stat545.com/block029_factors.html
+
