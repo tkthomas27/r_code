@@ -172,7 +172,12 @@ $(document).ready(function () {
 
 <div id="TOC">
 <ul>
-<li><a href="#factors"><span class="toc-section-number">1</span> Factors</a></li>
+<li><a href="#factors"><span class="toc-section-number">1</span> Factors</a><ul>
+<li><a href="#drop-unused-factors"><span class="toc-section-number">1.1</span> Drop unused factors</a></li>
+<li><a href="#change-ordering"><span class="toc-section-number">1.2</span> Change ordering</a></li>
+</ul></li>
+<li><a href="#character-data"><span class="toc-section-number">2</span> Character Data</a></li>
+<li><a href="#getting-data-in-and-out-of-r"><span class="toc-section-number">3</span> Getting Data in and Out of R</a></li>
 </ul>
 </div>
 
@@ -180,10 +185,72 @@ $(document).ready(function () {
 <div id="factors" class="section level1">
 <h1><span class="header-section-number">1</span> Factors</h1>
 <p><a href="http://stat545.com/block029_factors.html" class="uri">http://stat545.com/block029_factors.html</a></p>
+<ul>
+<li>Levels for factors are strings; really just integers</li>
+<li>be careful of stealth packages</li>
+</ul>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5cbmBgYCJ9 -->
+<pre class="r"><code>library(tidyverse)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyB0aWR5dmVyc2U6IGdncGxvdDJcbkxvYWRpbmcgdGlkeXZlcnNlOiB0aWJibGVcbkxvYWRpbmcgdGlkeXZlcnNlOiB0aWR5clxuTG9hZGluZyB0aWR5dmVyc2U6IHJlYWRyXG5Mb2FkaW5nIHRpZHl2ZXJzZTogcHVycnJcbkxvYWRpbmcgdGlkeXZlcnNlOiBkcGx5clxuQ29uZmxpY3RzIHdpdGggdGlkeSBwYWNrYWdlcyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tXG5maWx0ZXIoKTogZHBseXIsIHN0YXRzXG5sYWcoKTogICAgZHBseXIsIHN0YXRzXG4ifQ== -->
+<pre><code>Loading tidyverse: ggplot2
+Loading tidyverse: tibble
+Loading tidyverse: tidyr
+Loading tidyverse: readr
+Loading tidyverse: purrr
+Loading tidyverse: dplyr
+Conflicts with tidy packages -------------------------------------------------------------------
+filter(): dplyr, stats
+lag():    dplyr, stats</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<div id="drop-unused-factors" class="section level2">
+<h2><span class="header-section-number">1.1</span> Drop unused factors</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubmxldmVscyhoX2dhcCRjb3VudHJ5KVxuXG5gYGAifQ== -->
+<pre class="r"><code>nlevels(h_gap$country)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gaF9nYXAkY291bnRyeSA6ICQgb3BlcmF0b3IgaXMgaW52YWxpZCBmb3IgYXRvbWljIHZlY3RvcnNcbiJ9 -->
+<pre><code>Error in h_gap$country : $ operator is invalid for atomic vectors</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="change-ordering" class="section level2">
+<h2><span class="header-section-number">1.2</span> Change ordering</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInRibF9kZiIsInRibCIsImRhdGEuZnJhbWUiXSwibmNvbCI6MiwibnJvdyI6MTJ9LCJyZGYiOiJINHNJQUFBQUFBQUFBd3R5aVREaWl1QmlZR0JnWW1CbVptSmdZZ1l5V1ppQUJDTURDd01uaUs1Z1lHQVdCaXRnWU9BRlloNEdCdllGUUx3VWlGY0I4WG9nM2dMRU80RjRIeEFmQnVJVFFId1dpQzhCOFhXZ0hqNlFQb2ZkWm5yVGUvM3ZPK3laeE11OTdXMjZ3OTQ5emRuOXM0VWQ5ajBLMUR1MjU0WEQvcDl2VDR1a3ZuUTQwRnF0TitkMHJjTkJnZHNwVVRKckhBNTJTQlJ0VURqcWNQQjBrdStsajZzY0RuRndIV2dXeW5jNFpCSDJzdUxLUDRkRFU5dEFOSnJEV1pOekVvdUxnUXdCSkVHdWxNU1NSTDIwb3NUY1ZIVGxlVUF4bUhJbXFDQkxaV3BpRVZKQW9PamdMTW92MTRQcEFvVU1Vd09RK1AvLy94Y2doZTRhOXZ5Q2tzejhQS0JTSmxCZ3NxSzVpN0VJVFlDL05BOWtkSXB1Y2tacFhyYXVDY2p0WUdrSTRJV3llWkRZVEJBcm1mOURqV0tGR3NXV21wZWVtWmNLODJkT1lsSnFEcFREQi9RQzJBZDZCVVdaZVNXd1FBS0tGdXVWNUpja3d0UnhKZWZud0VUQWZtUDRCd0JVWlEvV09nSUFBQT09In0= -->
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["year"],"name":[1],"type":["int"],"align":["right"]},{"label":["x"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"1952","2":"6966.182"},{"1":"1957","2":"7314.051"},{"1":"1962","2":"7612.513"},{"1":"1967","2":"7906.317"},{"1":"1972","2":"8185.929"},{"1":"1977","2":"8458.962"},{"1":"1982","2":"8737.714"},{"1":"1987","2":"8976.191"},{"1":"1992","2":"9110.768"},{"1":"1997","2":"9232.084"},{"1":"2002","2":"9328.679"},{"1":"2007","2":"9515.054"}],"options":{"columns":{"min":{},"max":[10],"total":[2]},"rows":{"min":[10],"max":[10],"total":[12]},"pages":{}}}
+  </script>
+</div>
+<!-- rnb-frame-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<ul>
+<li>Use fct_reorder2() when you have a line chart of a quantitative x against another quantitative y and your factor provides the color. This way the legend appears in some order as the data! Contrast the legend on the left with the one on the right.</li>
+</ul>
+</div>
+</div>
+<div id="character-data" class="section level1">
+<h1><span class="header-section-number">2</span> Character Data</h1>
+<p><a href="http://stat545.com/block028_character-data.html" class="uri">http://stat545.com/block028_character-data.html</a></p>
+</div>
+<div id="getting-data-in-and-out-of-r" class="section level1">
+<h1><span class="header-section-number">3</span> Getting Data in and Out of R</h1>
+<p><a href="http://stat545.com/block026_file-out-in.html" class="uri">http://stat545.com/block026_file-out-in.html</a></p>
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAnRGF0YSBBbmFseXNpcyAyJwpvdXRwdXQ6CiAgaHRtbF9ub3RlYm9vazoKICAgIHRvYzogdHJ1ZQogICAgbnVtYmVyX3NlY3Rpb25zOiB0cnVlCiAgcGRmX2RvY3VtZW50OiBkZWZhdWx0Ci0tLQoKCiMgRmFjdG9ycwpodHRwOi8vc3RhdDU0NS5jb20vYmxvY2swMjlfZmFjdG9ycy5odG1sCgo=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAnRGF0YSBBbmFseXNpcyAyJwpvdXRwdXQ6CiAgaHRtbF9ub3RlYm9vazoKICAgIHRvYzogdHJ1ZQogICAgbnVtYmVyX3NlY3Rpb25zOiB0cnVlCiAgcGRmX2RvY3VtZW50OiBkZWZhdWx0Ci0tLQoKCiMgRmFjdG9ycwpodHRwOi8vc3RhdDU0NS5jb20vYmxvY2swMjlfZmFjdG9ycy5odG1sCgoqIExldmVscyBmb3IgZmFjdG9ycyBhcmUgc3RyaW5nczsgcmVhbGx5IGp1c3QgaW50ZWdlcnMKKiBiZSBjYXJlZnVsIG9mIHN0ZWFsdGggcGFja2FnZXMKCmBgYHtyfQpsaWJyYXJ5KHRpZHl2ZXJzZSkKbGlicmFyeShmb3JjYXRzKQpsaWJyYXJ5KGdhcG1pbmRlcikKCnN1bW1hcnkoZ2FwbWluZGVyJGNvbnRpbmVudCkKIyBvciBmY3RfY291bnQKZmN0X2NvdW50KGdhcG1pbmRlciRjb250aW5lbnQpCgoKYGBgCgojIyBEcm9wIHVudXNlZCBmYWN0b3JzCgpgYGB7cn0KaF9jb3VudHJpZXMgPC0gYygiRWd5cHQiLCAiSGFpdGkiLCAiUm9tYW5pYSIsICJUaGFpbGFuZCIsICJWZW5lenVlbGEiKQpoX2dhcCA8LSBnYXBtaW5kZXIgJT4lIGZpbHRlcihjb3VudHJ5ICVpbiUgaF9jb3VudHJpZXMpCm5sZXZlbHMoaF9nYXAkY291bnRyeSkKCiMgc3RpbGwgaGFzIGZhY3RvcnMgZm9yIGFsbCBjb3VudHJpZXMKCiMgdXNlIGRyb3BsZXZlbHMgb3IgZmN0X2Ryb3AoKQoKYGBgCgoKIyMgQ2hhbmdlIG9yZGVyaW5nCgpgYGB7cn0KIyMgb3JkZXIgYnkgZnJlcXVlbmN5CmdhcG1pbmRlciRjb250aW5lbnQgJT4lIAogIGZjdF9pbmZyZXEoKSAlPiUKICBsZXZlbHMoKSAlPiUgaGVhZCgpCgojIyBiYWNrd2FyZHMhCmdhcG1pbmRlciRjb250aW5lbnQgJT4lIAogIGZjdF9pbmZyZXEoKSAlPiUKICBmY3RfcmV2KCkgJT4lIAogIGxldmVscygpICU+JSBoZWFkKCkKCmdhcG1pbmRlciAlPiUgZ3JvdXBfYnkoeWVhcikgJT4lIHN1bW1hcml6ZSh4ID0gc3VtKGxpZmVFeHApKQoKIyByZWNvZGUgdGhlIGxldmVscwppX2dhcCA8LSBnYXBtaW5kZXIgJT4lIAogIGZpbHRlcihjb3VudHJ5ICVpbiUgYygiVW5pdGVkIFN0YXRlcyIsICJTd2VkZW4iLCAiQXVzdHJhbGlhIikpICU+JSAKICBkcm9wbGV2ZWxzKCkKaV9nYXAkY291bnRyeSAlPiUgbGV2ZWxzKCkKaV9nYXAkY291bnRyeSAlPiUKICBmY3RfcmVjb2RlKCJVU0EiID0gIlVuaXRlZCBTdGF0ZXMiLCAiT3oiID0gIkF1c3RyYWxpYSIpICU+JSBsZXZlbHMoKQoKYGBgCgoqIFVzZSBmY3RfcmVvcmRlcjIoKSB3aGVuIHlvdSBoYXZlIGEgbGluZSBjaGFydCBvZiBhIHF1YW50aXRhdGl2ZSB4IGFnYWluc3QgYW5vdGhlciBxdWFudGl0YXRpdmUgeSBhbmQgeW91ciBmYWN0b3IgcHJvdmlkZXMgdGhlIGNvbG9yLiBUaGlzIHdheSB0aGUgbGVnZW5kIGFwcGVhcnMgaW4gc29tZSBvcmRlciBhcyB0aGUgZGF0YSEgQ29udHJhc3QgdGhlIGxlZ2VuZCBvbiB0aGUgbGVmdCB3aXRoIHRoZSBvbmUgb24gdGhlIHJpZ2h0LgoKIyBDaGFyYWN0ZXIgRGF0YQpodHRwOi8vc3RhdDU0NS5jb20vYmxvY2swMjhfY2hhcmFjdGVyLWRhdGEuaHRtbAoKIyBHZXR0aW5nIERhdGEgaW4gYW5kIE91dCBvZiBSCmh0dHA6Ly9zdGF0NTQ1LmNvbS9ibG9jazAyNl9maWxlLW91dC1pbi5odG1sCgoKCg==</div>
 
 
 
