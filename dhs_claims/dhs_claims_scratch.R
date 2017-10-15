@@ -64,6 +64,11 @@ claims <- rbind(claims_2015,claims_2014,claims_2010_2013,claims_2007_2009,claims
 
 
 
+# year
+# airport
+# airline
+
+
 
 
 library(ggmap)
