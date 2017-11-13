@@ -108,3 +108,16 @@ qmplot(lon, lat, data = x, maptype = "toner-lite", color = I("red"), size=pass)
 
 
 
+x <- read_csv("~/documents/nfl_loc.csv")
+cl <- kmeans(x[,2:3], 8, nstart = 20)
+divs <- cl$cluster
+team <- x$team
+z <- data.frame(x$team,cl$cluster)
+
+aa <- merge(x, z, by.x = 0, by.y = )
+
+
+
+
+
+
