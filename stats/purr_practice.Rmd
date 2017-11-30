@@ -1,0 +1,26 @@
+---
+title: "Purr Practice"
+author: John Doe
+date: March 22, 2005
+output: html_notebook
+---
+
+```{r}
+gap_nested <- gapminder %>% 
+  group_by(continent, country) %>% 
+  nest()
+
+le_vs_yr <- function(df) {
+  lm(lifeExp ~ I(year - 1950), data = df)
+}
+
+gap_coefs <- gap_nested %>% 
+  mutate(fit = map(data, le_vs_yr),
+         tidy = map(fit, broom::tidy)) %>% 
+  select(continent, country, tidy) %>% 
+  unnest(tidy)
+
+
+#gap_coefs$tidy[[1]]$statistic[1]
+```
+
