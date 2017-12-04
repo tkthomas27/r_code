@@ -1,0 +1,167 @@
+---
+title: "Tidyverse"
+author: Kyle Thomas
+date: March 22, 2005
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+# Core
+
+## ggplo2
+
+http://ggplot2.tidyverse.org
+
+```{r}
+ggplot(mpg, aes(displ, hwy, colour = class)) + geom_point()
+```
+
+## dplyr
+
+http://dplyr.tidyverse.org
+
+```{r}
+starwars %>% 
+  filter(species == "Droid")
+```
+
+
+## tidyr
+
+http://tidyr.tidyverse.org
+
+gather and spread
+separate extract
+
+## readr
+
+http://readr.tidyverse.org
+
+read files; faster; consistent function naming conventions
+
+## purr
+
+http://readr.tidyverse.org
+
+functional programming
+
+map
+map_dbl
+
+## tibble
+
+http://tibble.tidyverse.org
+
+do less and complain more
+create tibble row-by-row with tribble
+
+```{r}
+tribble(
+  ~x, ~y,  ~z,
+  "a", 2,  3.6,
+  "b", 1,  8.5
+)
+```
+
+
+# Non-Core
+
+## Import
+
+for non-flat files/foreign files
+
+### readxl
+
+for xls and xlsx
+
+### haven
+
+for SPSS, stata, and SAS
+
+### jsonlite
+
+https://github.com/jeroen/jsonlite#jsonlite
+parse json
+
+### xml2
+https://github.com/r-lib/xml2
+parse xml
+
+### httr
+https://github.com/r-lib/httr
+wrapper for curl package
+
+### rvest
+
+https://github.com/hadley/rvest
+scraping web pages
+
+### DBI
+https://github.com/r-dbi/DBI
+defines common interface between R and RDBMS (RSQLite, RPostgres, odbc)
+
+## Wranlge
+
+### stringr
+http://stringr.tidyverse.org
+for string manipulation
+
+
+### lubridate
+http://lubridate.tidyverse.org
+date time manipulation
+
+### forcats
+http://forcats.tidyverse.org
+handling categorical vairables
+
+### hms
+https://github.com/tidyverse/hms
+for dealing with times
+
+### blob
+https://github.com/tidyverse/blob
+binary vectors
+
+## Program
+
+### rlnag
+http://rlang.tidyverse.org
+tidyeval framework; quasiquotation and quosures
+
+### magrittr
+http://magrittr.tidyverse.org
+the pipe
+"%<>%"
+
+
+### glue
+https://github.com/tidyverse/glue
+better version of paste
+
+## Model
+
+### recipes
+https://github.com/topepo/recipes
+for making design matrices
+
+
+### rsample
+https://github.com/topepo/rsample
+bootstrapping etc.
+
+### modelr
+https://github.com/tidyverse/modelr
+integrate models with tidyverse 
+
+### R4DS
+http://r4ds.had.co.nz
+R for Data Science
+
+### broom
+https://github.com/tidyverse/broom
+
+tidy, augment, glance
