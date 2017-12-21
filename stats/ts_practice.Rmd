@@ -16,7 +16,6 @@ library(astsa)
 library(forecast)
 ```
 
-
 # Visualizing GDP
 
 ```{r}
@@ -36,6 +35,8 @@ plot(diff(log(GDP))) #first-diff of log
 ```
 
 notice log plot is linear
+
+hello world `r x`
 
 ggplot facet wrap?
 plotly multiple plots?

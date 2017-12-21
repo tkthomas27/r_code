@@ -1,15 +1,16 @@
 
+library(tidyverse)
 library(caTools)
 
 # read in csvs
-alumni<-read_csv('alumni.csv')
-faculty<-read_csv('faculty.csv')
-internal<-read_csv('internal.csv')
-mary <- read_csv('mary.csv')
-media<-read_csv('media.csv')
-vip <- read_csv('vip.csv')
-video_producers <- read_csv('video_producers.csv')
-news<-read_csv('news_events.csv')
+alumni<-read_csv('wyss-alumni.csv')
+faculty<-read_csv('faculty-assistants.csv')
+internal<-read_csv('wyss-internal.csv')
+mary <- read_csv('maryscontacts.csv')
+media<-read_csv('media-contacts.csv')
+vip <- read_csv('VIP.csv')
+#video_producers <- read_csv('video_producers.csv')
+news<-read_csv('wyss-news.csv')
 
 # function for splitting the data and saving it to a csv
 email_split <-function(df){
@@ -37,7 +38,7 @@ mary_split <- email_split(mary)
 media_split <- email_split(media)
 news_split <- email_split(news)
 vip_split <- email_split(vip)
-video_producers <- email_split(video_producers)
+#video_producers <- email_split(video_producers)
 
 
 grouped_email <- alumni_split %>%

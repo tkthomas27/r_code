@@ -110,3 +110,8 @@ ggpairs(data=note, columns=c(1:5))
 
 
 
+```{r}
+y <- rowSums(replicate(2, sample(6, 10000, replace=T)))
+hist(y, xlim=range(1:12))
+```
+
