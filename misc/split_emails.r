@@ -1,16 +1,25 @@
 
-library(tidyverse)
-library(caTools)
+#############################################
+
+#load libraries
+library(tidyverse) #for data cleaning
+library(caTools) #for splitting randomly
+
+#############################################
+#read in each csv and save to a file
 
 # read in csvs
-alumni<-read_csv('wyss-alumni.csv')
-faculty<-read_csv('faculty-assistants.csv')
-internal<-read_csv('wyss-internal.csv')
-mary <- read_csv('maryscontacts.csv')
-media<-read_csv('media-contacts.csv')
+alumni<-read_csv('Wyss Alumni.csv')
+faculty<-read_csv('Wyss Fac and Assistants.csv')
+internal<-read_csv('Wyss Internal.csv')
+mary <- read_csv('Marys contacts.csv')
+media<-read_csv('Media Contacts.csv')
 vip <- read_csv('VIP.csv')
 #video_producers <- read_csv('video_producers.csv')
-news<-read_csv('wyss-news.csv')
+news<-read_csv('Wyss News.csv')
+
+#############################################
+# define a function that will automatically split each file and assignt A/B
 
 # function for splitting the data and saving it to a csv
 email_split <-function(df){
@@ -31,6 +40,9 @@ email_split <-function(df){
     return(a)
 }
 
+#############################################
+# call the function to split each email
+
 alumni_split <- email_split(alumni)
 faculty_split <- email_split(faculty)
 internal_split <- email_split(internal)
@@ -40,7 +52,8 @@ news_split <- email_split(news)
 vip_split <- email_split(vip)
 #video_producers <- email_split(video_producers)
 
-
+#############################################
+# combine the grouped emails
 grouped_email <- alumni_split %>%
     bind_rows(faculty_split,internal_split,mary_split,media_split,news_split,vip_split) %>%
     mutate(email = case_when(
@@ -50,9 +63,13 @@ grouped_email <- alumni_split %>%
     distinct(email,.keep_all=TRUE) %>%
     select(email, group, dataset)
 
+#output to a csv
 write_csv(grouped_email,"grouped_email.csv")
 
-
+#############################################
+#############################################
+#############################################
+# test code
 
 a <- alumni_split %>%
     bind_rows(faculty_split,internal_split,mary_split,media_split,news_split,vip_split) %>%

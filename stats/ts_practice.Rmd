@@ -16,6 +16,43 @@ library(astsa)
 library(forecast)
 ```
 
+# Time Series Data Management
+converting data to xts
+subsetting data using xts
+
+# Visualizing Time Series
+plot
+autoplot
+plotly
+
+# Time Series Analysis
+
+## Transformations
+
+log
+diff
+boxcox
+
+## Models
+
+naive
+MA
+AR
+ARMA
+ARIMA
+Seasonal ARIMA
+Fourier
+tbats (bats?)
+
+## Assessing Models
+
+acf
+pacf
+
+
+
+
+
 # Visualizing GDP
 
 ```{r}
