@@ -1,0 +1,91 @@
+---
+title: "tidyquant"
+output: html_notebook
+---
+
+https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ01-core-functions-in-tidyquant.html
+
+need XLConnect
+
+```{r}
+library(tidyquant)
+```
+
+```{r indexes}
+# see indexes available
+tq_index_options()
+
+# load sp500
+# company, ticker, weight, sector, shares held
+sp500 <- tq_index("SP500")
+
+# exchanges
+tq_exchange_options()
+nyse <- tq_exchange("NYSE")
+```
+
+```{r}
+tq_get_options()
+
+#price; daily; also has adjusted prices
+aapl_prices <- tq_get("AAPL", get = "stock.prices", from = "2002-01-01")
+
+# can also get dividends, splits, etc.
+
+# can get financials, but not great
+aapl_financials <- tq_get("AAPL", get = "financials")
+
+aapl_is_ann <- aapl_financials %>% 
+    filter(type == "IS") %>% 
+    select(annual) %>% 
+    unnest()
+
+#doesn't work
+aapl_quarter <- aapl_financials %>% 
+    unnest(quarter) %>% 
+    spread(key = data, value = value)
+```
+
+```{r}
+aapl_ratios <- tq_get("AAPL", get = "key.ratios")
+
+#?forcats?
+aapl_ratios %>% 
+    filter(section == "Valuation Ratios") %>% 
+    unnest() %>% 
+    ggplot(aes(x = date, y = value)) + 
+    geom_line(aes(col = forcats::fct_reorder2(category, date, value)), size = 2) +
+    labs(title = "10-Year Historical Valuation Ratios for AAPL", x = "", y = "", col = "") +
+    theme_tq() + scale_color_tq()
+```
+
+```{r}
+#quandl
+quandl_api_key('yhasiBxs1XDp1g2sQsP1')
+
+c("WIKI/FB", "WIKI/AAPL") %>% 
+    tq_get(get = "quandl",
+           from = "2007-01-01",
+           to = "2016-12-31",
+           column_index = 11, 
+           collapse = "annual",
+           transform = "rdiff")
+```
+
+Bloomberg
+Rblpapi
+
+```{r}
+# fred
+indpro <- tq_get("INDPRO", get = "economic.data", from = "1940-01-01")
+```
+
+```{r}
+# transform
+data(FANG)
+
+FANG %>% 
+    group_by(symbol) %>% 
+    tq_transmute(select = adjusted, mutate_fun = to.monthly, indexAt = "lastof")
+```
+
