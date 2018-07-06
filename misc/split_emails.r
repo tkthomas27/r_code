@@ -18,6 +18,17 @@ vip <- read_csv('VIP.csv')
 #video_producers <- read_csv('video_producers.csv')
 news<-read_csv('Wyss News.csv')
 
+alumni<-rio::import('Wyss Alumni.xls')
+faculty<-rio::import('Wyss Fac and Assistants.xls')
+internal<-rio::import('Wyss Internal.xls')
+mary <- rio::import('Marys contacts.xls')
+media<-rio::import('Media Contacts.xls')
+vip <- rio::import('VIP.xls')
+#video_producers <- rio::import('video_producers.xls')
+news<-rio::import('Wyss News.xls')
+
+
+
 #############################################
 # define a function that will automatically split each file and assignt A/B
 

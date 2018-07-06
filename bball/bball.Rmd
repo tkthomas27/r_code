@@ -3,3 +3,251 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+Get Data
+
+```{r}
+library(tidyverse)
+library(caret)
+```
+
+
+```{r}
+con = dbConnect(pg, user="kthomas1", password="",
+                host="localhost", port=5432, dbname="bball")
+
+raw_games <- dbGetQuery(con, "select * from oct_games") %>% 
+    mutate(home = case_when(location == "Home" ~ 1, 
+                            location == "Away" ~ 0)) %>% 
+    select(-team_name, -location)
+
+raw_schools <- dbGetQuery(con, "select * from oct_schools") %>% 
+    select(-year) %>% 
+    filter(division_id == 1)
+
+raw_kp_def <- dbGetQuery(con, "select * from kp_def") %>% 
+    select(-team_name, -TeamName, -starts_with("Rank")) %>% 
+    rename(year = Season) %>% 
+    rename_at(vars(-team_id, -year), funs(paste0("d_", .)))
+
+raw_kp_off <- dbGetQuery(con, "select * from kp_off") %>% 
+    select(-team_name, -TeamName) %>% 
+    rename(year = Season) %>% 
+    rename_at(vars(-team_id, -year), funs(paste0("o_", .)))
+
+raw_kp_phys <- dbGetQuery(con, "select * from kp_phys") %>% 
+    select(-team_name, -TeamName) %>% 
+    rename(year = Season) %>% 
+    select(year, team_id, Size, SizeRank, Exp, ExpRank, HgtEff, HgtEffRank, Bench, BenchRank)
+
+raw_kp_points <- dbGetQuery(con, "select * from kp_points") %>% 
+    select(-team_name, -TeamName) %>% 
+    rename(year = Season)
+
+raw_kp_misc <- dbGetQuery(con, "select * from kp_misc") %>% 
+    select(-team_name, -TeamName) %>% 
+    rename(year = Season) %>% 
+    select(-contains("Opp"), -FG3Rate, -RankFG3Rate, -DFP)
+
+```
+
+geo mapping
+notable statistics
+
+
+Base Line coin flip
+
+```{r}
+coin <- raw_games %>% 
+    inner_join(s)
+    select(win)
+```
+
+
+
+
+Home Game
+Clyde
+Opionated Logistic Regression
+Ridge Logistic Regression
+Lasso Logistic Regression
+Elastic Net Logistic Regression
+PCA Regression
+SVM
+PageRank
+
+# Feature Matrix
+
+```{r}
+wins <- raw_games %>% 
+    select(team_id, game_date, win) %>% 
+    mutate(game_date = as.Date(game_date, format = "%m/%d/%Y"))
+
+#4 features
+features_school <- raw_schools %>% 
+    select(team_id, games, wins, losses, total_winpct)
+
+#47 features
+features_school_annual <- raw_kp_def %>% 
+    inner_join(raw_kp_off) %>% 
+    inner_join(raw_kp_points) %>% 
+    inner_join(raw_kp_phys) %>% #currently just a handful of variables
+    inner_join(raw_kp_misc) %>% 
+    distinct(year, team_id, .keep_all = TRUE)
+
+fgd <- raw_games %>% 
+    inner_join(features_school) %>%  #will get us down to d-1 schools
+    select(-roll_ot_year, -roll_ot_total) %>% 
+    select(year, game_date, team_id, opponent_id, starts_with("roll"), -contains("total")) %>% 
+    mutate(game_date = as.Date(game_date, format = "%m/%d/%Y")) 
+
+fgd_both <- fgd %>% 
+    inner_join(fgd, by = c("game_date" = "game_date", "opponent_id" = "team_id"))
+
+fgdx <- fg_both %>% select(contains(".x")) %>% select(-year.x) 
+fgdy <- fg_both %>% select(contains(".y")) %>% select(-year.y, -opponent_id.y) 
+fgdz <- cbind(fgd_both[1:4], fgdx - fgdy)
+
+fga <- raw_games %>% 
+    inner_join(features_school) %>%  #will get us down to d-1 schools
+    select(year, game_date, team_id, opponent_id) %>% 
+    mutate(game_date = as.Date(game_date, format = "%m/%d/%Y")) %>% 
+    inner_join(features_school_annual) %>% 
+    arrange(team_id, year)
+
+fga_both <- fga %>% 
+    inner_join(features_school_annual, by = c("year" = "year", "opponent_id" = "team_id"))
+
+fgax <- fga_both %>% select(contains(".x")) 
+fgay <- fga_both %>% select(contains(".y")) 
+fgaz <- cbind(fga_both[1:4], fgax - fgay)
+
+features <- inner_join(fgdz, fgaz) %>% 
+    inner_join(wins) %>% 
+    select(win, contains(".x")) %>% 
+    select(-year.x)
+
+features[is.na(features)] <- 0
+
+ws <- features$win
+features <- as.data.frame(scale(features[,2:ncol(features)]))
+
+```
+
+
+```{r}
+
+```
+
+
+?? for below
+```{r}
+library(elasticnet)
+x <- as.matrix(features)
+object <- enet(x = x, y = ws)
+fits <- predict.enet(object, x, type="fit")
+preds <- fits$fit
+
+library(glmnet)
+gln <- glmnet(x, ws, family="binomial", alpha = 0.5, lambda = 0.001)
+preds <- predict(gln, x, type = "response")
+predz <- as.data.frame(preds) %>% mutate(winz = if_else(s0>.5,1,0))
+table(ws, predz$winz)
+```
+
+above has 77% hit rate
+
+problems: data is not in time; phys is fine; but other data points need to be on a rolling year basis
+
+
+
+# Home Game
+
+```{r}
+clyde <- features %>% 
+    select(team_id, year, game_date, win, roll_pscore_year, roll_pallow_year, roll_games_year, roll_pscore_year_opp, roll_pallow_year_opp, roll_games_year_opp) %>% 
+    group_by(team_id, year) %>% 
+    mutate(px = (lag(roll_pscore_year) + lag(roll_pallow_year_opp))/(2 * lag(roll_games_year)),
+           py = (lag(roll_pscore_year_opp) + lag(roll_pallow_year))/(2 * lag(roll_games_year_opp)),
+           clyde_win = if_else(px > py, 1, 0))
+```
+
+
+
+```{r}
+confusionMatrix(table(clyde$win, clyde$clyde_win))
+```
+
+Note: if you don't lag the values you get a very positive 65%
+
+cross validate clyde? roc curve?
+
+
+
+```{r}
+library(glmnet)
+data(iris)
+x <- model.matrix(Sepal.Length~., iris)[,-1]
+y <- iris$Sepal.Length
+m <- cv.glmnet(x, y)
+
+fit = glmnet(x, features_y$win, family = "binomial")
+```
+
+```{r}
+library(elasticnet)
+enet(x = xx, y = features_y, lambda = 0)
+
+xx <- features %>% select(win, Size, total_winpct)
+fit <- glm(win ~ Size + total_winpct, data = features, family = "binomial")
+probs <- predict(fit, type = "response")
+pred <- rep(0, 128344)
+pred[probs>.5] <- 1
+table(features$win, pred)
+```
+
+
+
+
+probs determiend by 
+
+
+
+
+Old Code
+
+```{r}
+#old seed
+seeds <- data.frame(c(1,16,8,9,5,12,4,13,6,11,3,14,7,10,2,15))
+colnames(seeds) <- "seed"
+
+seeds_x <- seeds %>% 
+    mutate(team2 = lead(seed)) %>% 
+    mutate(row = row_number()) %>% 
+    mutate(drp = if_else(row %% 2 == 0, "drop", "not")) %>% 
+    filter(drp=="not") %>% 
+    select(seed, team2) %>% 
+    rename(team1 = seed)
+
+round <- seeds_x %>% 
+    mutate(win = if_else(team1 < team2, "win", "lose")) %>% 
+    filter(win == "win")
+
+
+```
+
+```{r}
+#conference rankings?
+conf <- raw_schools %>% 
+    select(team_id, conference_key)
+
+conf_off <- raw_kp_off %>% 
+    inner_join(conf) %>% 
+    group_by(conference_key) %>% 
+    summarise(ave1 = mean(RankeFG_Pct),
+              ave2 = mean(RankTO_Pct),
+              ave3 = mean(RankOR_Pct),
+              ave4 = mean(RankFT_Rate)) %>% 
+    mutate(ave_off = rowMeans(ave1 + ave2))
+
+```
+

@@ -1,0 +1,159 @@
+---
+title: "Tourney"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+con = dbConnect(pg, user="kthomas1", password="",
+                host="localhost", port=5432, dbname="bball")
+
+raw_games <- dbGetQuery(con, "select * from oct_games") %>% 
+    select(team_id, year, game_date, starts_with("rol"))
+
+raw_schools <- dbGetQuery(con, "select * from oct_schools") %>% 
+    filter(division_id == 1) %>% 
+    select(team_id, team_name)
+```
+
+
+```{r}
+clyde_stats <- raw_games %>% 
+    mutate(date = as.Date(game_date, format = "%m/%d/%Y")) %>% 
+    inner_join(raw_schools) %>% 
+    arrange(team_id, date) %>% 
+    group_by(team_id) %>% 
+    top_n(1, date) %>% 
+    select(-game_date, -date, -year)
+```
+
+
+```{r}
+bracket <- read_csv("~/github/r_code/bball/tour2018.csv")
+odds <- read_csv("~/github/r_code/bball/odds.csv")
+
+round1 <- bracket %>% 
+    mutate(opp_team = lead(team),
+           opp_seed = lead(seed),
+           opp_team_id = lead(team_id)) %>% 
+    filter(row_number() %% 2 != 0) %>% 
+    inner_join(clyde_stats, by = c("team_id" = "team_id")) %>% 
+    inner_join(clyde_stats, by = c("opp_team_id" = "team_id")) %>% 
+    inner_join(odds) %>% 
+    inner_join(odds, by = c("opp_team_id" = "team_id")) %>% 
+    rename(team_seed = seed) %>% 
+    mutate(team_score = ((roll_pscore_year.x + roll_pallow_year.y)/(2 * roll_games_year.x)),
+           opp_score = ((roll_pscore_year.y + roll_pallow_year.x)/(2 * roll_games_year.y)),
+           win = r1_odds.x + (team_score - opp_score)/10,
+           winner_id = if_else(win > r1_odds.y, team_id, opp_team_id),
+           winner_team = if_else(win > r1_odds.y, team, opp_team),
+           winner_seed = if_else(win > r1_odds.y, team_seed, opp_seed)) %>% 
+    select(region, team_seed, team_id, team, opp_seed, opp_team_id, opp_team, team_score, opp_score, winner_seed, winner_id, winner_team)
+    
+round2 <- round1 %>% 
+    select(region, winner_id, winner_seed, winner_team) %>% 
+    group_by(region) %>% 
+    mutate(opp_team_id = lead(winner_id),
+           opp_seed = lead(winner_seed),
+           opp_team = lead(winner_team)) %>% 
+    rename(team_id = winner_id, team = winner_team, team_seed = winner_seed) %>% 
+    filter(!is.na(opp_team_id)) %>% 
+    filter(row_number() %% 2 != 0) %>% 
+    inner_join(clyde_stats, by = c("team_id" = "team_id")) %>% 
+    inner_join(clyde_stats, by = c("opp_team_id" = "team_id")) %>% 
+    inner_join(odds) %>% 
+    inner_join(odds, by = c("opp_team_id" = "team_id")) %>% 
+    mutate(team_score = ((roll_pscore_year.x + roll_pallow_year.y)/(2 * roll_games_year.x)),
+           opp_score = ((roll_pscore_year.y + roll_pallow_year.x)/(2 * roll_games_year.y)),
+           winx = r2_odds.x + (team_score - opp_score)/10,
+           winy = r2_odds.y + (opp_score - team_score)/10,
+           winner_id = if_else(winx > winy, team_id, opp_team_id),
+           winner_team = if_else(winx > winy, team, opp_team),
+           winner_seed = if_else(winx > winy, team_seed, opp_seed)) %>% 
+    select(region, team_seed, team_id, team, opp_seed, opp_team_id, opp_team, team_score, opp_score, winner_seed, winner_id, winner_team)
+
+round3 <- round2 %>% 
+    select(region, winner_id, winner_seed, winner_team) %>% 
+    group_by(region) %>% 
+    mutate(opp_team_id = lead(winner_id),
+           opp_seed = lead(winner_seed),
+           opp_team = lead(winner_team)) %>% 
+    rename(team_id = winner_id, team = winner_team, team_seed = winner_seed) %>% 
+    filter(!is.na(opp_team_id)) %>% 
+    filter(row_number() %% 2 != 0) %>% 
+    inner_join(clyde_stats, by = c("team_id" = "team_id")) %>% 
+    inner_join(clyde_stats, by = c("opp_team_id" = "team_id")) %>% 
+    inner_join(odds) %>% 
+    inner_join(odds, by = c("opp_team_id" = "team_id")) %>% 
+    mutate(team_score = ((roll_pscore_year.x + roll_pallow_year.y)/(2 * roll_games_year.x)),
+           opp_score = ((roll_pscore_year.y + roll_pallow_year.x)/(2 * roll_games_year.y)),
+           winx = r3_odds.x + (team_score - opp_score)/10,
+           winy = r3_odds.y + (opp_score - team_score)/10,
+           winner_id = if_else(winx > winy, team_id, opp_team_id),
+           winner_team = if_else(winx > winy, team, opp_team),
+           winner_seed = if_else(winx > winy, team_seed, opp_seed)) %>%  
+    select(region, team_seed, team_id, team, opp_seed, opp_team_id, opp_team, team_score, opp_score, winner_seed, winner_id, winner_team)
+
+round4 <- round3 %>% 
+    select(region, winner_id, winner_seed, winner_team) %>% 
+    group_by(region) %>% 
+    mutate(opp_team_id = lead(winner_id),
+           opp_seed = lead(winner_seed),
+           opp_team = lead(winner_team)) %>% 
+    rename(team_id = winner_id, team = winner_team, team_seed = winner_seed) %>% 
+    filter(!is.na(opp_team_id)) %>% 
+    filter(row_number() %% 2 != 0) %>% 
+    inner_join(clyde_stats, by = c("team_id" = "team_id")) %>% 
+    inner_join(clyde_stats, by = c("opp_team_id" = "team_id")) %>% 
+    inner_join(odds) %>% 
+    inner_join(odds, by = c("opp_team_id" = "team_id")) %>% 
+    mutate(team_score = ((roll_pscore_year.x + roll_pallow_year.y)/(2 * roll_games_year.x)),
+           opp_score = ((roll_pscore_year.y + roll_pallow_year.x)/(2 * roll_games_year.y)),
+           winx = r4_odds.x + (team_score - opp_score)/10,
+           winy = r4_odds.y + (opp_score - team_score)/10,
+           winner_id = if_else(winx > winy, team_id, opp_team_id),
+           winner_team = if_else(winx > winy, team, opp_team),
+           winner_seed = if_else(winx > winy, team_seed, opp_seed)) %>% 
+    select(region, team_seed, team_id, team, opp_seed, opp_team_id, opp_team, team_score, opp_score, winner_seed, winner_id, winner_team)
+
+final_four <- round4 %>% 
+    select(region, winner_id, winner_seed, winner_team) %>% 
+    mutate(side = if_else(region == "south" | region == "west", "left", "right")) %>% 
+    group_by(side) %>% 
+    mutate(opp_team_id = lead(winner_id),
+           opp_seed = lead(winner_seed),
+           opp_team = lead(winner_team)) %>% 
+    ungroup(side) %>% 
+    rename(team_id = winner_id, team = winner_team, team_seed = winner_seed) %>% 
+    filter(!is.na(opp_team_id)) %>% 
+    inner_join(clyde_stats, by = c("team_id" = "team_id")) %>% 
+    inner_join(clyde_stats, by = c("opp_team_id" = "team_id")) %>% 
+    inner_join(odds) %>% 
+   mutate(team_score = (roll_pscore_year.x + roll_pallow_year.y)/(2 * roll_games_year.x),
+           opp_score = (roll_pscore_year.y + roll_pallow_year.x)/(2 * roll_games_year.y),
+           winner_id = if_else(team_score > opp_score, team_id, opp_team_id),
+           winner_team = if_else(team_score > opp_score, team, opp_team),
+           winner_seed = if_else(team_score > opp_score, team_seed, opp_seed)) %>% 
+    select(region, team_seed, team_id, team, opp_seed, opp_team_id, opp_team, team_score, opp_score, winner_seed, winner_id, winner_team)
+
+final <- final_four %>% 
+    select(region, winner_id, winner_seed, winner_team) %>% 
+    mutate(opp_team_id = lead(winner_id),
+           opp_seed = lead(winner_seed),
+           opp_team = lead(winner_team)) %>% 
+    rename(team_id = winner_id, team = winner_team, team_seed = winner_seed) %>% 
+    filter(!is.na(opp_team_id)) %>% 
+    inner_join(clyde_stats, by = c("team_id" = "team_id")) %>% 
+    inner_join(clyde_stats, by = c("opp_team_id" = "team_id")) %>% 
+   mutate(team_score = (roll_pscore_year.x + roll_pallow_year.y)/(2 * roll_games_year.x),
+           opp_score = (roll_pscore_year.y + roll_pallow_year.x)/(2 * roll_games_year.y),
+           winner_id = if_else(team_score > opp_score, team_id, opp_team_id),
+           winner_team = if_else(team_score > opp_score, team, opp_team),
+           winner_seed = if_else(team_score > opp_score, team_seed, opp_seed)) %>% 
+    select(team_seed, team_id, team_seed, opp_seed, opp_team_id, opp_team, team_score, opp_score, winner_seed, winner_id, winner_team)
+    
+
+```
